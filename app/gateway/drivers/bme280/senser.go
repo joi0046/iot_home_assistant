@@ -1,11 +1,11 @@
 package bme280
 
-type Sensor struct{}
+type BME280 struct{}
 
-func (s *Sensor) Name() string {
+func (s *BME280) Name() string {
 	return "BME280"
 }
 
-func (s *Sensor) Read() (float64, error) {
+func (s *BME280) Read() (float64, error) {
 	return 24.3, nil
 }
