@@ -2,20 +2,40 @@ package main
 
 import (
 	"fmt"
-	"gateway/drivers/bh1750"
+	//drivers
 	"gateway/drivers/bme280"
+	//internal
 	"gateway/internal/device"
 	"gateway/internal/discovery"
+	"gateway/internal/driver"
 )
 
 func main() {
-	discovery := discovery.New()
-	discovery.Scan()
+	// Discovery
+	d := discovery.New()
 
+	devices := d.Scan()
+
+	for _, info := range devices {
+		fmt.Printf("Found: 0x%02X\n", info.Address)
+	}
+
+	// Driver Registry
+	registry := driver.NewRegistry()
+	registry.Register(&bme280.Sensor{})
+
+	// Device Manager
 	manager := device.NewManager()
-	manager.Register(&bme280.BME280{})
-	manager.Register(&bh1750.BH1750{})
 
+	for _, info := range devices {
+		if manager.DiscoverAndRegister(info, registry) {
+			fmt.Printf("Registered: 0x%02X\n", info.Address)
+		} else {
+			fmt.Printf("Unknown device: 0x%02X\n", info.Address)
+		}
+	}
+
+	// Sensor Read
 	for _, sensor := range manager.Sensors() {
 		fmt.Println("Sensor:", sensor.Name())
 
@@ -24,6 +44,7 @@ func main() {
 			fmt.Println("Error:", err)
 			continue
 		}
+
 		fmt.Println("Value:", value)
 	}
 }

@@ -21,3 +21,17 @@ func (m *Manager) Register(sensor driver.SensorDriver) {
 func (m *Manager) Sensors() []driver.SensorDriver {
 	return m.sensors
 }
+
+func (m *Manager) DiscoverAndRegister(
+	info driver.DeviceInfo,
+	registry *driver.Registry,
+) bool {
+	sensor := registry.Find(info)
+
+	if sensor == nil {
+		return false
+	}
+
+	m.Register(sensor)
+	return true
+}
