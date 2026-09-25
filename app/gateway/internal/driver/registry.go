@@ -1,19 +1,19 @@
 package driver
 
 type Registry struct {
-	sensors []Sensor
+	drivers []SensorDriver
 }
 
-func NewRegistry(sensors ...Sensor) *Registry {
+func NewRegistry(drivers ...SensorDriver) *Registry {
 	return &Registry{
-		sensors: sensors,
+		drivers: drivers,
 	}
 }
 
-func (r *Registry) Detect(info DeviceInfo) Sensor {
-	for _, sensor := range r.sensors {
-		if sensor.Detect(info) {
-			return sensor
+func (r *Registry) Find(info DeviceInfo) SensorDriver {
+	for _, driver := range r.drivers {
+		if driver.Detect(info) {
+			return driver
 		}
 	}
 
