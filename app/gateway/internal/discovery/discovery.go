@@ -78,6 +78,7 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 			fmt.Printf("Found device: 0x%02X\n", address)
 
 			devices = append(devices, driver.DeviceInfo{
+				Bus:     "i2c-" + d.busNumber,
 				Address: uint8(address),
 			})
 		}
