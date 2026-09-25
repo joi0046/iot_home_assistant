@@ -12,11 +12,13 @@ import (
 
 type Discovery struct {
 	busNumber string
+	registry  *driver.Registry
 }
 
-func New() (*Discovery, error) {
+func New(registry *driver.Registry) (*Discovery, error) {
 	return &Discovery{
 		busNumber: "1",
+		registry:  registry,
 	}, nil
 }
 

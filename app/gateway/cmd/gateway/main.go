@@ -2,31 +2,30 @@ package main
 
 import (
 	"fmt"
-	//drivers
+	"log"
+
+	// drivers
 	"gateway/drivers/bme280"
-	//internal
+
+	// internal
 	"gateway/internal/device"
 	"gateway/internal/discovery"
 	"gateway/internal/driver"
 )
 
 func main() {
+	// Driver Registry
+	registry := driver.NewRegistry(
+		&bme280.Sensor{},
+	)
+
 	// Discovery
-	d, err := discovery.New()
+	d, err := discovery.New(registry)
 	if err != nil {
-		fmt.Println("Discovery error:", err)
-		return
+		log.Fatal("Discovery error:", err)
 	}
 
 	devices := d.Scan()
-
-	for _, info := range devices {
-		fmt.Printf("Found: 0x%02X\n", info.Address)
-	}
-
-	// Driver Registry
-	registry := driver.NewRegistry()
-	registry.Register(&bme280.Sensor{})
 
 	// Device Manager
 	manager := device.NewManager()

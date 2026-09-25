@@ -11,7 +11,7 @@ func (s *Sensor) Name() string {
 }
 
 func (s *Sensor) Detect(info driver.DeviceInfo) bool {
-	return info.Address == 0x76 || info.Address == 0x77
+	return info.Address == 0x40 || info.Address == 0x77
 }
 
 func (s *Sensor) Read() (float64, error) {
