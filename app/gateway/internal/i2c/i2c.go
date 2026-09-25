@@ -40,10 +40,34 @@ func (b *Bus) SetAddress(address uint8) error {
 	)
 
 	if errno != 0 {
-		return fmt.Errorf("set I2C address 0x%02X: %w", address, errno)
+		return fmt.Errorf(
+			"set I2C address 0x%02X: %w",
+			address,
+			errno,
+		)
 	}
 
 	return nil
+}
+
+func (b *Bus) Write(data []byte) error {
+	_, err := b.file.Write(data)
+	if err != nil {
+		return fmt.Errorf("I²C write: %w", err)
+	}
+
+	return nil
+}
+
+func (b *Bus) Read(length int) ([]byte, error) {
+	data := make([]byte, length)
+
+	_, err := b.file.Read(data)
+	if err != nil {
+		return nil, fmt.Errorf("I²C read: %w", err)
+	}
+
+	return data, nil
 }
 
 func (b *Bus) ReadRegister(register uint8, length int) ([]byte, error) {
