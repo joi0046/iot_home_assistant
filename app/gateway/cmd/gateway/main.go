@@ -6,6 +6,7 @@ import (
 
 	// drivers
 	"gateway/drivers/bme280"
+	"gateway/drivers/hdc1000"
 
 	// internal
 	"gateway/internal/device"
@@ -17,6 +18,7 @@ func main() {
 	// Driver Registry
 	registry := driver.NewRegistry(
 		&bme280.Sensor{},
+		&hdc1000.Sensor{},
 	)
 
 	// Discovery
