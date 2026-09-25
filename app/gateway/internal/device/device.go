@@ -1,7 +1,9 @@
 package device
 
+import "gateway/internal/driver"
+
 type Device struct {
-	ID     string
-	Name   string
-	Status string
+	Driver  driver.SensorDriver
+	Bus     string
+	Address uint8
 }

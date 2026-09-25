@@ -13,6 +13,7 @@ import (
 	"gateway/internal/discovery"
 	"gateway/internal/driver"
 	"gateway/internal/i2c"
+	"gateway/internal/protocol"
 )
 
 func main() {
@@ -68,25 +69,35 @@ func main() {
 	}
 
 	// Sensor Read
-	for _, sensor := range manager.Sensors() {
-		fmt.Println("Sensor:", sensor.Name())
+	for _, device := range manager.Devices() {
+		fmt.Println("Sensor:", device.Driver.Name())
 
-		value, err := sensor.Read()
+		value, err := device.Driver.Read()
 		if err != nil {
 			fmt.Println("Error:", err)
 			continue
 		}
 
-		if value.Temperature != nil {
-			fmt.Printf("Temperature: %.2f °C\n", *value.Temperature)
+		reading := protocol.NewReading(
+			device.Driver.Name(),
+			fmt.Sprintf("%s/0x%02X", device.Bus, device.Address),
+			value.Temperature,
+			value.Humidity,
+			value.Lux,
+		)
+
+		fmt.Printf("Reading: %+v\n", reading)
+
+		if reading.Temperature != nil {
+			fmt.Printf("Temperature: %.2f °C\n", *reading.Temperature)
 		}
 
-		if value.Humidity != nil {
-			fmt.Printf("Humidity: %.2f %%\n", *value.Humidity)
+		if reading.Humidity != nil {
+			fmt.Printf("Humidity: %.2f %%\n", *reading.Humidity)
 		}
 
-		if value.Lux != nil {
-			fmt.Printf("Lux: %.2f lx\n", *value.Lux)
+		if reading.Lux != nil {
+			fmt.Printf("Lux: %.2f lx\n", *reading.Lux)
 		}
 	}
 }

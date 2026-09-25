@@ -5,21 +5,21 @@ import (
 )
 
 type Manager struct {
-	sensors []driver.SensorDriver
+	devices []Device
 }
 
 func NewManager() *Manager {
 	return &Manager{
-		sensors: []driver.SensorDriver{},
+		devices: []Device{},
 	}
 }
 
-func (m *Manager) Register(sensor driver.SensorDriver) {
-	m.sensors = append(m.sensors, sensor)
+func (m *Manager) Register(device Device) {
+	m.devices = append(m.devices, device)
 }
 
-func (m *Manager) Sensors() []driver.SensorDriver {
-	return m.sensors
+func (m *Manager) Devices() []Device {
+	return m.devices
 }
 
 func (m *Manager) DiscoverAndRegister(
@@ -32,6 +32,12 @@ func (m *Manager) DiscoverAndRegister(
 		return false
 	}
 
-	m.Register(sensor)
+	device := Device{
+		Driver:  sensor,
+		Bus:     "i2c-1",
+		Address: info.Address,
+	}
+
+	m.Register(device)
 	return true
 }
