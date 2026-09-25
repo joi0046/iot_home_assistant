@@ -14,6 +14,6 @@ func (s *Sensor) Detect(info driver.DeviceInfo) bool {
 	return info.Address == 0x76 || info.Address == 0x77
 }
 
-func (s *Sensor) Read() (float64, error) {
-	return 24.3, nil
+func (s *Sensor) Read() (driver.Reading, error) {
+	return driver.Reading{}, nil
 }

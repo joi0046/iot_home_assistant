@@ -28,6 +28,6 @@ func (s *Sensor) Detect(info driver.DeviceInfo) bool {
 		info.Address == 0x43
 }
 
-func (s *Sensor) Read() (float64, error) {
-	return 0, fmt.Errorf("HDC1000 Read is not implemented")
+func (s *Sensor) Read() (driver.Reading, error) {
+	return driver.Reading{}, fmt.Errorf("HDC1000 Read is not implemented")
 }
