@@ -1,6 +1,7 @@
 package discovery
 
 import (
+	"bufio"
 	"fmt"
 	"os/exec"
 	"strconv"
@@ -32,17 +33,31 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 
 	devices := make([]driver.DeviceInfo, 0)
 
-	lines := strings.Split(string(output), "\n")
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
 
-	for _, line := range lines {
-		fields := strings.Fields(line)
+	for scanner.Scan() {
+		fields := strings.Fields(scanner.Text())
 
+		// "00:", "10:", ... の行以外は無視
 		if len(fields) < 2 {
 			continue
 		}
 
+		rowText := strings.TrimSuffix(fields[0], ":")
+
+		row, err := strconv.ParseUint(rowText, 16, 8)
+		if err != nil {
+			continue
+		}
+
 		for column, value := range fields[1:] {
+			// デバイスが存在しない
 			if value == "--" {
+				continue
+			}
+
+			// UU = カーネルが使用中
+			if value == "UU" {
 				continue
 			}
 
@@ -51,13 +66,12 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 				continue
 			}
 
-			// i2cdetectの行番号 + 列番号からアドレスを計算
-			row, err := strconv.ParseUint(strings.TrimSuffix(fields[0], ":"), 16, 8)
-			if err != nil {
+			// 念のため i2cdetect の位置とも照合
+			expected := row + uint64(column)
+
+			if address != expected {
 				continue
 			}
-
-			address = row + uint64(column)
 
 			fmt.Printf("Found device: 0x%02X\n", address)
 
