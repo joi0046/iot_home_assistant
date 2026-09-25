@@ -45,7 +45,7 @@ func main() {
 	// Driver Registry
 	registry := driver.NewRegistry(
 		&bme280.Sensor{},
-		&hdc1000.Sensor{},
+		hdc1000.New(bus),
 	)
 
 	// Discovery
