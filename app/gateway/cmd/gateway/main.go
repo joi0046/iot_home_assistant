@@ -4,6 +4,7 @@ import (
 	// packages
 	"encoding/json"
 	"fmt"
+	"time"
 
 	// drivers
 	"gateway/drivers/bme280"
@@ -70,6 +71,7 @@ func main() {
 		fmt.Println("Discovery error:", err)
 		return
 	}
+
 	// Device Manager
 	manager := device.NewManager()
 
@@ -86,72 +88,74 @@ func main() {
 		}
 	}
 
-	// センサー読み取り
-	for _, device := range manager.Devices() {
-		fmt.Println("Sensor:", device.Driver.Name())
+	// 5秒ごとにセンサーを読み取る
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
 
-		value, err := device.Driver.Read()
-		if err != nil {
-			fmt.Println("Error:", err)
-			continue
-		}
+	for range ticker.C {
+		for _, device := range manager.Devices() {
+			fmt.Println("Sensor:", device.Driver.Name())
 
-		// 外部向けReadingへ変換
-		reading := protocol.NewReading(
-			device.Driver.Name(),
-			fmt.Sprintf(
-				"%s/0x%02X",
-				device.Bus,
-				device.Address,
-			),
-			value.Temperature,
-			value.Humidity,
-			value.Lux,
-		)
+			// センサー読み取り
+			value, err := device.Driver.Read()
+			if err != nil {
+				fmt.Println("Error:", err)
+				continue
+			}
 
-		fmt.Printf("Reading: %+v\n", reading)
-
-		// JSONへ変換
-		payload, err := json.Marshal(reading)
-		if err != nil {
-			fmt.Println("JSON error:", err)
-			continue
-		}
-
-		fmt.Println("JSON:", string(payload))
-
-		// MQTTへ送信
-		err = mqttClient.Publish(
-			"gateway/readings",
-			string(payload),
-		)
-		if err != nil {
-			fmt.Println("MQTT publish error:", err)
-			continue
-		}
-
-		fmt.Println("Published:", string(payload))
-
-		// 人間向け表示
-		if reading.Temperature != nil {
-			fmt.Printf(
-				"Temperature: %.2f °C\n",
-				*reading.Temperature,
+			// 外部向けReadingへ変換
+			reading := protocol.NewReading(
+				device.Driver.Name(),
+				fmt.Sprintf(
+					"%s/0x%02X",
+					device.Bus,
+					device.Address,
+				),
+				value.Temperature,
+				value.Humidity,
+				value.Lux,
 			)
-		}
 
-		if reading.Humidity != nil {
-			fmt.Printf(
-				"Humidity: %.2f %%\n",
-				*reading.Humidity,
-			)
-		}
+			// JSONへ変換
+			payload, err := json.Marshal(reading)
+			if err != nil {
+				fmt.Println("JSON error:", err)
+				continue
+			}
 
-		if reading.Lux != nil {
-			fmt.Printf(
-				"Lux: %.2f lx\n",
-				*reading.Lux,
+			// MQTTへ送信
+			err = mqttClient.Publish(
+				"gateway/readings",
+				string(payload),
 			)
+			if err != nil {
+				fmt.Println("MQTT publish error:", err)
+				continue
+			}
+
+			fmt.Println("Published:", string(payload))
+
+			// 人間向け表示
+			if reading.Temperature != nil {
+				fmt.Printf(
+					"Temperature: %.2f °C\n",
+					*reading.Temperature,
+				)
+			}
+
+			if reading.Humidity != nil {
+				fmt.Printf(
+					"Humidity: %.2f %%\n",
+					*reading.Humidity,
+				)
+			}
+
+			if reading.Lux != nil {
+				fmt.Printf(
+					"Lux: %.2f lx\n",
+					*reading.Lux,
+				)
+			}
 		}
 	}
 }
