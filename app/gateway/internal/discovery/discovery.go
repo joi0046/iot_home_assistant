@@ -2,47 +2,63 @@ package discovery
 
 import (
 	"fmt"
-
-	"periph.io/x/conn/v3/i2c"
-	"periph.io/x/conn/v3/i2c/i2creg"
-	"periph.io/x/host/v3"
+	"os/exec"
+	"strconv"
+	"strings"
 
 	"gateway/internal/driver"
 )
 
 type Discovery struct {
-	bus i2c.Bus
+	busNumber string
 }
 
 func New() (*Discovery, error) {
-	_, err := host.Init()
-	if err != nil {
-		return nil, err
-	}
-
-	bus, err := i2creg.Open("1")
-	if err != nil {
-		return nil, err
-	}
-
 	return &Discovery{
-		bus: bus,
+		busNumber: "1",
 	}, nil
 }
 
 func (d *Discovery) Scan() []driver.DeviceInfo {
-	devices := make([]driver.DeviceInfo, 0)
-
 	fmt.Println("Scanning I²C bus...")
 
-	for address := 0x03; address <= 0x77; address++ {
-		dev := &i2c.Dev{
-			Bus:  d.bus,
-			Addr: uint16(address),
+	cmd := exec.Command("i2cdetect", "-y", d.busNumber)
+
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println("I²C scan error:", err)
+		return nil
+	}
+
+	devices := make([]driver.DeviceInfo, 0)
+
+	lines := strings.Split(string(output), "\n")
+
+	for _, line := range lines {
+		fields := strings.Fields(line)
+
+		if len(fields) < 2 {
+			continue
 		}
 
-		err := dev.Tx(nil, nil)
-		if err == nil {
+		for column, value := range fields[1:] {
+			if value == "--" {
+				continue
+			}
+
+			address, err := strconv.ParseUint(value, 16, 8)
+			if err != nil {
+				continue
+			}
+
+			// i2cdetectの行番号 + 列番号からアドレスを計算
+			row, err := strconv.ParseUint(strings.TrimSuffix(fields[0], ":"), 16, 8)
+			if err != nil {
+				continue
+			}
+
+			address = row + uint64(column)
+
 			fmt.Printf("Found device: 0x%02X\n", address)
 
 			devices = append(devices, driver.DeviceInfo{
