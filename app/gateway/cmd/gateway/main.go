@@ -12,7 +12,11 @@ import (
 
 func main() {
 	// Discovery
-	d := discovery.New()
+	d, err := discovery.New()
+	if err != nil {
+		fmt.Println("Discovery error:", err)
+		return
+	}
 
 	devices := d.Scan()
 
