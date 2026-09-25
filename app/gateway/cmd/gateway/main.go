@@ -77,6 +77,16 @@ func main() {
 			continue
 		}
 
-		fmt.Println("Value:", value)
+		if value.Temperature != nil {
+			fmt.Printf("Temperature: %.2f °C\n", *value.Temperature)
+		}
+
+		if value.Humidity != nil {
+			fmt.Printf("Humidity: %.2f %%\n", *value.Humidity)
+		}
+
+		if value.Lux != nil {
+			fmt.Printf("Lux: %.2f lx\n", *value.Lux)
+		}
 	}
 }
