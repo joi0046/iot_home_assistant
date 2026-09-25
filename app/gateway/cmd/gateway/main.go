@@ -12,9 +12,21 @@ import (
 	"gateway/internal/device"
 	"gateway/internal/discovery"
 	"gateway/internal/driver"
+	"gateway/internal/i2c"
 )
 
 func main() {
+	bus, err := i2c.Open(1)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer bus.Close()
+
+	if err := bus.SetAddress(0x40); err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println("I²C connection OK")
 	// Driver Registry
 	registry := driver.NewRegistry(
 		&bme280.Sensor{},
