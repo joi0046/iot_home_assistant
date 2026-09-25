@@ -89,7 +89,7 @@ func main() {
 	}
 
 	// 5秒ごとにセンサーを読み取る
-	ticker := time.NewTicker(5 * time.Second)
+	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
