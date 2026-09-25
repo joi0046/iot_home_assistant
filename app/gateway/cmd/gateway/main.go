@@ -34,6 +34,13 @@ func main() {
 		log.Fatal(err)
 	}
 
+	data, err = bus.ReadRegister(0xFF, 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Device ID: 0x%02X%02X\n", data[0], data[1])
+
 	fmt.Printf("Manufacturer ID: 0x%02X%02X\n", data[0], data[1])
 	// Driver Registry
 	registry := driver.NewRegistry(
