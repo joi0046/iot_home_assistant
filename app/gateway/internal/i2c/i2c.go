@@ -45,3 +45,19 @@ func (b *Bus) SetAddress(address uint8) error {
 
 	return nil
 }
+
+func (b *Bus) ReadRegister(register uint8, length int) ([]byte, error) {
+	_, err := b.file.Write([]byte{register})
+	if err != nil {
+		return nil, fmt.Errorf("write register: %w", err)
+	}
+
+	data := make([]byte, length)
+
+	_, err = b.file.Read(data)
+	if err != nil {
+		return nil, fmt.Errorf("read register: %w", err)
+	}
+
+	return data, nil
+}

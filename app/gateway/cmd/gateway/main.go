@@ -16,6 +16,7 @@ import (
 )
 
 func main() {
+	//test
 	bus, err := i2c.Open(1)
 	if err != nil {
 		log.Fatal(err)
@@ -27,6 +28,13 @@ func main() {
 	}
 
 	fmt.Println("I²C connection OK")
+
+	data, err := bus.ReadRegister(0xFE, 2)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("Manufacturer ID: 0x%02X%02X\n", data[0], data[1])
 	// Driver Registry
 	registry := driver.NewRegistry(
 		&bme280.Sensor{},
