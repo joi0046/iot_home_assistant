@@ -47,7 +47,7 @@ func New() (*Gateway, error) {
 	)
 
 	// Discovery
-	scanner, err := discovery.New(registry)
+	scanner, err := discovery.New(&discovery.I2CScanner{})
 	if err != nil {
 		mqttClient.Close()
 		bus.Close()
