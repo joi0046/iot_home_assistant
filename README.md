@@ -20,7 +20,12 @@
     5. センサーデータの長期保存・可視化 <br>
     6. ESP32との連携 <br>
     7. ローカルAIによるIoT制御 <br>
-    
+
+テストを実行
+
+```bash
+go test ./internal/protocol
+```
 docker composeを使用してコンテナを起動
  
 ```bash
