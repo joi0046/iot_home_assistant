@@ -85,7 +85,7 @@ func (s *Sensor) Read() (driver.Reading, error) {
 	humidity := float64(rawHumidity) / 65536.0 * 100.0
 
 	return driver.Reading{
-		Temperature: &temperature,
-		Humidity:    &humidity,
+		"temperature": temperature,
+		"humidity":    humidity,
 	}, nil
 }

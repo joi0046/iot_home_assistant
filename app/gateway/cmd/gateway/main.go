@@ -28,29 +28,6 @@ func main() {
 	}
 	defer bus.Close()
 
-	// I²C接続確認
-	if err := bus.SetAddress(0x40); err != nil {
-		fmt.Println("I²C address error:", err)
-		return
-	}
-
-	fmt.Println("I²C connection OK")
-
-	// HDC1000のID確認
-	data, err := bus.ReadRegister(0xFE, 2)
-	if err != nil {
-		fmt.Println("FE read error:", err)
-		return
-	}
-	fmt.Printf("FE: %02X %02X\n", data[0], data[1])
-
-	data, err = bus.ReadRegister(0xFF, 2)
-	if err != nil {
-		fmt.Println("FF read error:", err)
-		return
-	}
-	fmt.Printf("FF: %02X %02X\n", data[0], data[1])
-
 	// MQTT接続
 	mqttClient, err := mqtt.New("tcp://localhost:1883")
 	if err != nil {
@@ -66,7 +43,7 @@ func main() {
 	)
 
 	// Discovery
-	discovery, err := discovery.New(registry)
+	scanner, err := discovery.New(registry)
 	if err != nil {
 		fmt.Println("Discovery error:", err)
 		return
@@ -76,7 +53,7 @@ func main() {
 	manager := device.NewManager()
 
 	// デバイス検出
-	devices := discovery.Scan()
+	devices := scanner.Scan()
 
 	for _, info := range devices {
 		if manager.DiscoverAndRegister(info, registry) {
@@ -88,7 +65,7 @@ func main() {
 		}
 	}
 
-	// 5秒ごとにセンサーを読み取る
+	// 2秒ごとにセンサーを読み取る
 	ticker := time.NewTicker(2 * time.Second)
 	defer ticker.Stop()
 
@@ -107,10 +84,9 @@ func main() {
 			reading := protocol.NewReading(
 				fmt.Sprintf("%s/0x%02X", device.Bus, device.Address),
 				device.Driver.Name(),
-				value.Temperature,
-				value.Humidity,
-				value.Lux,
+				value,
 			)
+
 			// JSONへ変換
 			payload, err := json.Marshal(reading)
 			if err != nil {
@@ -131,17 +107,16 @@ func main() {
 			fmt.Println("Published:", string(payload))
 
 			// 人間向け表示
-
-			if value, ok := reading.Data["temperature"]; ok {
-				fmt.Printf("Temperature: %.2f %s\n", value.Value, value.Unit)
+			if temperature, ok := value["temperature"]; ok {
+				fmt.Printf("Temperature: %.2f °C\n", temperature)
 			}
 
-			if value, ok := reading.Data["humidity"]; ok {
-				fmt.Printf("Humidity: %.2f %s\n", value.Value, value.Unit)
+			if humidity, ok := value["humidity"]; ok {
+				fmt.Printf("Humidity: %.2f %%\n", humidity)
 			}
 
-			if value, ok := reading.Data["illuminance"]; ok {
-				fmt.Printf("Illuminance: %.2f %s\n", value.Value, value.Unit)
+			if illuminance, ok := value["illuminance"]; ok {
+				fmt.Printf("Illuminance: %.2f lx\n", illuminance)
 			}
 		}
 	}

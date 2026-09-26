@@ -1,6 +1,10 @@
 package protocol
 
-import "time"
+import (
+	"time"
+
+	"gateway/internal/driver"
+)
 
 type Value struct {
 	Value float64 `json:"value"`
@@ -24,30 +28,14 @@ type Reading struct {
 func NewReading(
 	deviceID string,
 	deviceType string,
-	temperature *float64,
-	humidity *float64,
-	lux *float64,
+	data driver.Reading,
 ) *Reading {
-	data := make(map[string]Value)
+	values := make(Data)
 
-	if temperature != nil {
-		data["temperature"] = Value{
-			Value: *temperature,
-			Unit:  "°C",
-		}
-	}
-
-	if humidity != nil {
-		data["humidity"] = Value{
-			Value: *humidity,
-			Unit:  "%",
-		}
-	}
-
-	if lux != nil {
-		data["illuminance"] = Value{
-			Value: *lux,
-			Unit:  "lx",
+	for key, value := range data {
+		values[key] = Value{
+			Value: value,
+			Unit:  unitFor(key),
 		}
 	}
 
@@ -57,7 +45,30 @@ func NewReading(
 			ID:   deviceID,
 			Type: deviceType,
 		},
-		Data:      data,
+		Data:      values,
 		Timestamp: time.Now(),
+	}
+}
+
+func unitFor(key string) string {
+	switch key {
+	case "temperature":
+		return "°C"
+	case "humidity":
+		return "%"
+	case "pressure":
+		return "hPa"
+	case "illuminance":
+		return "lx"
+	case "co2":
+		return "ppm"
+	case "voltage":
+		return "V"
+	case "current":
+		return "A"
+	case "power":
+		return "W"
+	default:
+		return ""
 	}
 }
