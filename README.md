@@ -21,14 +21,15 @@
     6. ESP32との連携 <br>
     7. ローカルAIによるIoT制御 <br>
     
-    docker composeを使用してコンテナを起動
+docker composeを使用してコンテナを起動
  
 ```bash
 cd iot_home_assistant
 docker compose -f docker/compose.yml up -d
 ```
 
-    ゲートウェイを起動
+ゲートウェイを起動
+
 ```bash
 cd app/gateway/
 go run cmd/gateway/main.go
