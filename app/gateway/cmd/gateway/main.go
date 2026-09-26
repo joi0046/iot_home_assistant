@@ -13,6 +13,7 @@ import (
 	// internal
 	"gateway/internal/device"
 	"gateway/internal/discovery"
+	"gateway/internal/display"
 	"gateway/internal/driver"
 	"gateway/internal/i2c"
 	"gateway/internal/mqtt"
@@ -90,27 +91,7 @@ func main() {
 			}
 
 			// 人間向け表示
-			for key, value := range value {
-				switch key {
-				case "temperature":
-					fmt.Printf("Temperature: %.2f °C\n", value)
-
-				case "humidity":
-					fmt.Printf("Humidity: %.2f %%\n", value)
-
-				case "illuminance":
-					fmt.Printf("Illuminance: %.2f lx\n", value)
-
-				case "pressure":
-					fmt.Printf("Pressure: %.2f hPa\n", value)
-
-				case "co2":
-					fmt.Printf("CO2: %.0f ppm\n", value)
-
-				default:
-					fmt.Printf("%s: %.2f\n", key, value)
-				}
-			}
+			display.Print(value)
 		}
 	}
 }
