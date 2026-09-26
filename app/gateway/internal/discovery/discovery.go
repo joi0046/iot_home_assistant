@@ -24,9 +24,13 @@ func (s *I2CScanner) Scan(busNumber string) ([]driver.DeviceInfo, error) {
 		return nil, fmt.Errorf("i2cdetect: %w", err)
 	}
 
+	return parseOutput(string(output), busNumber), nil
+}
+
+func parseOutput(output string, busNumber string) []driver.DeviceInfo {
 	devices := make([]driver.DeviceInfo, 0)
 
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	scanner := bufio.NewScanner(strings.NewReader(output))
 
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
@@ -65,7 +69,7 @@ func (s *I2CScanner) Scan(busNumber string) ([]driver.DeviceInfo, error) {
 		}
 	}
 
-	return devices, nil
+	return devices
 }
 
 type Discovery struct {
