@@ -24,6 +24,10 @@
 テストを実行
 
 ```bash
+go test ./...
+```
+
+```bash
 go test ./internal/protocol
 ```
 
