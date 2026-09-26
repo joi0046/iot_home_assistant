@@ -11,7 +11,6 @@ type Client struct {
 }
 
 func New(brokerURL string) (*Client, error) {
-
 	opts := paho.NewClientOptions()
 	opts.AddBroker(brokerURL)
 
@@ -41,6 +40,10 @@ func (c *Client) Publish(topic string, payload string) error {
 	}
 
 	return nil
+}
+
+func (c *Client) IsConnected() bool {
+	return c.client.IsConnected()
 }
 
 func (c *Client) Close() {
