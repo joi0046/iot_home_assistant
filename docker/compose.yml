@@ -23,3 +23,20 @@ services:
 
     environment:
       - TZ=Asia/Tokyo
+
+  gateway:
+    build:
+      context: ../app/gateway
+      dockerfile: Dockerfile
+
+    container_name: iot_gateway
+    restart: unless-stopped
+
+    env_file:
+      - ../.env
+
+    devices:
+      - /dev/i2c-1:/dev/i2c-1
+
+    depends_on:
+      - mqtt
