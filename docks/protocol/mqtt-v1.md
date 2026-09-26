@@ -1,20 +1,58 @@
-## MQTT Protocol v1
+# MQTT Protocol v1
 
-Go IoT Gateway と外部サービス間でセンサーデータを交換するための通信規格。
+## 1. 概要
 
-本プロトコルは、Home Assistant、データベース、AI Agent などの外部システムが、センサーの具体的な実装やドライバを意識せずにGatewayからデータを取得できることを目的とする。
+Go IoT Gatewayでは、センサーから取得したデータを外部サービスへ提供するためにMQTTを使用する。
 
-### Topic
+本プロトコルは、AI Agent、データベース、Home Assistantなどの外部システムが、Gatewayから提供されるセンサーデータを共通の形式で利用できることを目的とする。
 
-センサーデータは以下のMQTT TopicにPublishする。
+Gatewayはセンサー固有のI²C通信を担当し、外部システムにはセンサーの種類に依存しない統一されたReading形式でデータを提供する。
+
+## 2. 通信構成
+
+```text
+Sensor / I²C
+      ↓
+Go IoT Gateway
+      ↓
+    MQTT
+      ↓
+ ┌────┼──────────────┐
+ ↓    ↓              ↓
+Home  Database     AI Agent
+Assistant             ↓
+                  Home Assistant API
+```
+
+## 3. MQTT Topic
+
+センサーの測定値は以下のTopicへPublishする。
 
 ```text
 gateway/v1/readings
 ```
 
-すべてのセンサーの計測値を同一TopicへPublishする。
+### Topic構成
 
-### Message Format
+```text
+gateway/
+└── v1/
+    └── readings
+```
+
+* `gateway`: Go IoT Gatewayが提供するデータ
+* `v1`: Protocol version 1
+* `readings`: センサーの測定値
+
+Protocolのバージョンが変更された場合は、Topicのバージョンも変更する。
+
+例:
+
+```text
+gateway/v2/readings
+```
+
+## 4. Payload
 
 PayloadはJSON形式とする。
 
@@ -27,40 +65,31 @@ PayloadはJSON形式とする。
   },
   "data": {
     "temperature": {
-      "value": 28.99505615234375,
+      "value": 31.6,
       "unit": "°C"
     },
     "humidity": {
-      "value": 71.563720703125,
+      "value": 66.9,
       "unit": "%"
     }
   },
-  "timestamp": "2026-09-26T18:47:07.20007484+09:00"
+  "timestamp": "2026-09-26T20:18:12.611629168+09:00"
 }
 ```
 
-### Fields
+## 5. version
 
-#### `version`
-
-プロトコルのバージョン。
-
-現在のバージョンは `"1"`。
+Protocolのバージョンを表す。
 
 ```json
 "version": "1"
 ```
 
-#### `device`
+Protocol v1では文字列として扱う。
 
-データを取得したデバイスの情報。
+## 6. device
 
-| Field  | Type   | Description       |
-| ------ | ------ | ----------------- |
-| `id`   | string | Gateway内でのデバイス識別子 |
-| `type` | string | センサーの種類           |
-
-Example:
+センサーを識別するための情報。
 
 ```json
 "device": {
@@ -69,118 +98,211 @@ Example:
 }
 ```
 
-##### Device ID
+### device.id
 
-Device IDは以下の形式で自動生成する。
+デバイスの物理的な接続先を基準として識別する。
+
+形式:
 
 ```text
 {bus}/{address}
 ```
 
-Example:
+例:
 
 ```text
 i2c-1/0x40
+i2c-1/0x76
 ```
 
-これにより、同じI²Cアドレスを使用するデバイスが異なるバスに存在する場合でも識別できる。
+### device.type
 
-デバイスIDは手動登録ではなく、Gatewayのデバイス検出機構から生成する。
+センサーの種類を表す。
 
-### `data`
+例:
 
-センサーが取得した物理量を格納する。
+```text
+HDC1000
+BME280
+BH1750
+```
 
-データ項目名にはセンサー固有の名前ではなく、物理量を表す名前を使用する。
+## 7. data
 
-Example:
+センサーから取得した測定値を格納する。
 
 ```json
 "data": {
   "temperature": {
-    "value": 28.99505615234375,
+    "value": 31.6,
     "unit": "°C"
   },
   "humidity": {
-    "value": 71.563720703125,
+    "value": 66.9,
     "unit": "%"
   }
 }
 ```
 
-各データ項目は以下の形式とする。
+`data`は固定されたフィールドではなく、センサーが提供する測定項目に応じて動的に構成される。
 
-| Field   | Type   | Description |
-| ------- | ------ | ----------- |
-| `value` | number | 計測値         |
-| `unit`  | string | 計測値の単位      |
+これにより、センサーごとに異なる測定項目を同一のProtocolで扱える。
 
-### Standard Data Keys
+## 8. Measurement Key
 
-現在定義している物理量のキーは以下。
+測定項目は物理量を表す名前を使用する。
 
-| Key           | Physical Quantity | Example Unit |
-| ------------- | ----------------- | ------------ |
-| `temperature` | 温度                | `°C`         |
-| `humidity`    | 湿度                | `%`          |
-| `pressure`    | 気圧                | `hPa`        |
-| `illuminance` | 照度                | `lx`         |
-| `co2`         | CO₂濃度             | `ppm`        |
-| `voltage`     | 電圧                | `V`          |
-| `current`     | 電流                | `A`          |
-| `power`       | 電力                | `W`          |
+| Key           | 意味      | Unit  |
+| ------------- | ------- | ----- |
+| `temperature` | 温度      | `°C`  |
+| `humidity`    | 湿度      | `%`   |
+| `pressure`    | 気圧      | `hPa` |
+| `illuminance` | 照度      | `lx`  |
+| `co2`         | 二酸化炭素濃度 | `ppm` |
+| `voltage`     | 電圧      | `V`   |
+| `current`     | 電流      | `A`   |
+| `power`       | 電力      | `W`   |
 
-新しいセンサーを追加する場合も、可能な限り既存の物理量キーを使用する。
+センサー固有の名称ではなく、可能な限り一般的な物理量の名称を使用する。
 
-例えば、照度センサーの値は `lux` ではなく `illuminance` とする。
+例えばBH1750の測定値は、
+
+```text
+lux
+```
+
+ではなく、
+
+```text
+illuminance
+```
+
+として扱う。
+
+## 9. Value
+
+各測定項目は以下の形式で表現する。
 
 ```json
-"illuminance": {
-  "value": 320.5,
-  "unit": "lx"
+{
+  "value": 31.6,
+  "unit": "°C"
 }
 ```
 
-`lux` は単位であり、物理量の名称ではないためである。
+### value
 
-### `timestamp`
+測定値。
 
-センサー値を取得した時刻。
+JSON上では数値として扱う。
 
-ISO 8601形式の日時文字列として記録する。
+### unit
+
+測定値の単位。
+
+単位は各測定値に含めることで、受信側がセンサーの種類を知らなくても値の意味を判断できるようにする。
+
+## 10. timestamp
+
+測定を行った時刻を表す。
 
 ```json
-"timestamp": "2026-09-26T18:47:07.20007484+09:00"
+"timestamp": "2026-09-26T20:18:12.611629168+09:00"
 ```
 
-`timestamp` は `data` の外側に配置する。
+ISO 8601形式を使用する。
 
-### Design Goals
+`timestamp`は`data`の外側に配置する。
 
-本プロトコルは以下を目的とする。
+## 11. データ処理の責務
 
-* センサーの種類に依存しない共通データ形式
-* センサーをGatewayへ自動登録できる構成
-* Home Assistantから容易に利用できること
-* データベースで時系列データとして保存しやすいこと
-* AI Agentがセンサーデータを機械的に解釈しやすいこと
-* 将来的なプロトコル拡張に対応できること
-
-### Data Flow
+Gatewayは以下を担当する。
 
 ```text
-Sensor
-  ↓
-Go IoT Gateway
-  ↓
-gateway/v1/readings
-  ↓
-MQTT
-  ├──→ Home Assistant
-  ├──→ Database
-  └──→ AI Agent
+I²C通信
+ ↓
+センサー検出
+ ↓
+センサー読み取り
+ ↓
+Reading生成
+ ↓
+Protocol形式へ変換
+ ↓
+JSON化
+ ↓
+MQTT Publish
 ```
 
-現在のv1では、Gatewayから外部サービスへの**計測データ配信**を対象とする。
+一方、受信側はセンサー固有のI²C通信を意識せず、Protocolに従ってデータを利用する。
 
-デバイス制御などの逆方向通信については、将来のプロトコル拡張で扱う。
+## 12. 想定される利用者
+
+Protocol v1では、主に以下のシステムからの利用を想定する。
+
+### Home Assistant
+
+MQTTを利用してセンサー状態を取得する。
+
+### Database
+
+センサーの時系列データを保存する。
+
+```text
+timestamp
+device_id
+measurement
+value
+unit
+```
+
+### AI Agent
+
+センサー情報を取得し、環境の状態を分析する。
+
+例:
+
+```text
+temperature = 31.6 °C
+humidity = 66.9 %
+```
+
+などのデータを利用して状況を判断する。
+
+## 13. Protocol v1の範囲
+
+Protocol v1では、Gatewayから外部システムへの**測定値の提供**を対象とする。
+
+```text
+Gateway → MQTT → External System
+```
+
+デバイスを制御するための逆方向通信についてはProtocol v1の対象外とする。
+
+将来的には、
+
+```text
+AI Agent
+    ↓
+  MQTT
+    ↓
+Gateway
+    ↓
+Device
+```
+
+のような制御機能を追加する可能性がある。
+
+## 14. 設計方針
+
+Protocol v1では以下を重視する。
+
+* センサーの種類に依存しない
+* 外部システムから扱いやすい
+* 人間がJSONを見ても意味を理解できる
+* AI Agentが解釈しやすい
+* Databaseへ保存しやすい
+* Protocolのバージョンアップに対応できる
+* Gateway内部の実装と外部Protocolを分離する
+
+これにより、Go IoT Gatewayをセンサーと外部システムの間にある共通データ基盤として利用できるようにする。
