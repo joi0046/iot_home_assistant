@@ -26,6 +26,7 @@ go.work.sum
 
 # env file
 .env
+!.env.example
 
 # Editor/IDE
 # .idea/
@@ -33,4 +34,3 @@ go.work.sum
 
 homeassistant/
 app/gateway/get-docker.sh
-

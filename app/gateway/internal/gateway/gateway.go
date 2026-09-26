@@ -7,6 +7,7 @@ import (
 	"gateway/drivers/bme280"
 	"gateway/drivers/hdc1000"
 
+	"gateway/internal/config"
 	"gateway/internal/device"
 	"gateway/internal/discovery"
 	"gateway/internal/display"
@@ -21,17 +22,20 @@ type Gateway struct {
 	mqtt      *mqtt.Client
 	publisher *publisher.Publisher
 	manager   *device.Manager
+	interval  time.Duration
 }
 
 func New() (*Gateway, error) {
+	cfg := config.Load()
+
 	// I²Cバスを開く
-	bus, err := i2c.Open(1)
+	bus, err := i2c.Open(cfg.I2CBus)
 	if err != nil {
 		return nil, fmt.Errorf("I²C error: %w", err)
 	}
 
 	// MQTT接続
-	mqttClient, err := mqtt.New("tcp://localhost:1883")
+	mqttClient, err := mqtt.New(cfg.MQTTBroker)
 	if err != nil {
 		bus.Close()
 		return nil, fmt.Errorf("MQTT error: %w", err)
@@ -76,11 +80,12 @@ func New() (*Gateway, error) {
 		mqtt:      mqttClient,
 		publisher: publisher,
 		manager:   manager,
+		interval:  cfg.ReadInterval,
 	}, nil
 }
 
 func (g *Gateway) Run() {
-	ticker := time.NewTicker(2 * time.Second)
+	ticker := time.NewTicker(g.interval)
 	defer ticker.Stop()
 
 	for range ticker.C {
