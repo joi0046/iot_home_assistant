@@ -11,8 +11,12 @@ type Client struct {
 }
 
 func New(brokerURL string) (*Client, error) {
+
 	opts := paho.NewClientOptions()
 	opts.AddBroker(brokerURL)
+
+	opts.AutoReconnect = true
+	opts.ConnectRetry = true
 
 	client := paho.NewClient(opts)
 
