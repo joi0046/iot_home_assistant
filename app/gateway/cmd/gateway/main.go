@@ -105,17 +105,12 @@ func main() {
 
 			// 外部向けReadingへ変換
 			reading := protocol.NewReading(
+				fmt.Sprintf("%s/0x%02X", device.Bus, device.Address),
 				device.Driver.Name(),
-				fmt.Sprintf(
-					"%s/0x%02X",
-					device.Bus,
-					device.Address,
-				),
 				value.Temperature,
 				value.Humidity,
 				value.Lux,
 			)
-
 			// JSONへ変換
 			payload, err := json.Marshal(reading)
 			if err != nil {
@@ -125,7 +120,7 @@ func main() {
 
 			// MQTTへ送信
 			err = mqttClient.Publish(
-				"gateway/readings",
+				"gateway/v1/readings",
 				string(payload),
 			)
 			if err != nil {
@@ -136,25 +131,17 @@ func main() {
 			fmt.Println("Published:", string(payload))
 
 			// 人間向け表示
-			if reading.Temperature != nil {
-				fmt.Printf(
-					"Temperature: %.2f °C\n",
-					*reading.Temperature,
-				)
+
+			if value, ok := reading.Data["temperature"]; ok {
+				fmt.Printf("Temperature: %.2f %s\n", value.Value, value.Unit)
 			}
 
-			if reading.Humidity != nil {
-				fmt.Printf(
-					"Humidity: %.2f %%\n",
-					*reading.Humidity,
-				)
+			if value, ok := reading.Data["humidity"]; ok {
+				fmt.Printf("Humidity: %.2f %s\n", value.Value, value.Unit)
 			}
 
-			if reading.Lux != nil {
-				fmt.Printf(
-					"Lux: %.2f lx\n",
-					*reading.Lux,
-				)
+			if value, ok := reading.Data["illuminance"]; ok {
+				fmt.Printf("Illuminance: %.2f %s\n", value.Value, value.Unit)
 			}
 		}
 	}
