@@ -12,11 +12,15 @@ import (
 
 const ReadingTopic = "gateway/v1/readings"
 
-type Publisher struct {
-	mqtt *mqtt.Client
+type MQTT interface {
+	Publish(topic string, payload string) error
 }
 
-func New(mqttClient *mqtt.Client) *Publisher {
+type Publisher struct {
+	mqtt MQTT
+}
+
+func New(mqttClient MQTT) *Publisher {
 	return &Publisher{
 		mqtt: mqttClient,
 	}
@@ -52,3 +56,6 @@ func (p *Publisher) Publish(
 
 	return nil
 }
+
+// 実際のMQTT ClientがMQTT interfaceを満たすことを確認する。
+var _ MQTT = (*mqtt.Client)(nil)
