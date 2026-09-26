@@ -2,7 +2,7 @@ package main
 
 import (
 	// packages
-	"encoding/json"
+
 	"fmt"
 	"time"
 
@@ -16,7 +16,7 @@ import (
 	"gateway/internal/driver"
 	"gateway/internal/i2c"
 	"gateway/internal/mqtt"
-	"gateway/internal/protocol"
+	"gateway/internal/publisher"
 )
 
 func main() {
@@ -35,6 +35,9 @@ func main() {
 		return
 	}
 	defer mqttClient.Close()
+
+	// Publisher
+	publisher := publisher.New(mqttClient)
 
 	// センサードライバーを登録
 	registry := driver.NewRegistry(
@@ -80,31 +83,11 @@ func main() {
 				continue
 			}
 
-			// 外部向けReadingへ変換
-			reading := protocol.NewReading(
-				fmt.Sprintf("%s/0x%02X", device.Bus, device.Address),
-				device.Driver.Name(),
-				value,
-			)
-
-			// JSONへ変換
-			payload, err := json.Marshal(reading)
-			if err != nil {
-				fmt.Println("JSON error:", err)
-				continue
-			}
-
 			// MQTTへ送信
-			err = mqttClient.Publish(
-				"gateway/v1/readings",
-				string(payload),
-			)
-			if err != nil {
-				fmt.Println("MQTT publish error:", err)
+			if err := publisher.Publish(device, value); err != nil {
+				fmt.Println("Publish error:", err)
 				continue
 			}
-
-			fmt.Println("Published:", string(payload))
 
 			// 人間向け表示
 			for key, value := range value {
