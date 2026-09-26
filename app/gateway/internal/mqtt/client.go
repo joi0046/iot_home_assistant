@@ -14,6 +14,9 @@ func New(brokerURL string) (*Client, error) {
 	opts := paho.NewClientOptions()
 	opts.AddBroker(brokerURL)
 
+	opts.AutoReconnect = true
+	opts.ConnectRetry = true
+
 	client := paho.NewClient(opts)
 
 	token := client.Connect()
@@ -37,6 +40,10 @@ func (c *Client) Publish(topic string, payload string) error {
 	}
 
 	return nil
+}
+
+func (c *Client) IsConnected() bool {
+	return c.client.IsConnected()
 }
 
 func (c *Client) Close() {

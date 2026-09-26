@@ -10,37 +10,31 @@ import (
 	"gateway/internal/driver"
 )
 
-type Discovery struct {
-	busNumber string
-	registry  *driver.Registry
+type Scanner interface {
+	Scan(busNumber string) ([]driver.DeviceInfo, error)
 }
 
-func New(registry *driver.Registry) (*Discovery, error) {
-	return &Discovery{
-		busNumber: "1",
-		registry:  registry,
-	}, nil
-}
+type I2CScanner struct{}
 
-func (d *Discovery) Scan() []driver.DeviceInfo {
-	fmt.Println("Scanning I²C bus...")
-
-	cmd := exec.Command("i2cdetect", "-y", d.busNumber)
+func (s *I2CScanner) Scan(busNumber string) ([]driver.DeviceInfo, error) {
+	cmd := exec.Command("i2cdetect", "-y", busNumber)
 
 	output, err := cmd.Output()
 	if err != nil {
-		fmt.Println("I²C scan error:", err)
-		return nil
+		return nil, fmt.Errorf("i2cdetect: %w", err)
 	}
 
+	return parseOutput(string(output), busNumber), nil
+}
+
+func parseOutput(output string, busNumber string) []driver.DeviceInfo {
 	devices := make([]driver.DeviceInfo, 0)
 
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	scanner := bufio.NewScanner(strings.NewReader(output))
 
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 
-		// "00:", "10:", ... の行以外は無視
 		if len(fields) < 2 {
 			continue
 		}
@@ -53,13 +47,7 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 		}
 
 		for column, value := range fields[1:] {
-			// デバイスが存在しない
-			if value == "--" {
-				continue
-			}
-
-			// UU = カーネルが使用中
-			if value == "UU" {
+			if value == "--" || value == "UU" {
 				continue
 			}
 
@@ -68,20 +56,48 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 				continue
 			}
 
-			// 念のため i2cdetect の位置とも照合
 			expected := row + uint64(column)
 
 			if address != expected {
 				continue
 			}
 
-			fmt.Printf("Found device: 0x%02X\n", address)
-
 			devices = append(devices, driver.DeviceInfo{
-				Bus:     "i2c-" + d.busNumber,
+				Bus:     "i2c-" + busNumber,
 				Address: uint8(address),
 			})
 		}
+	}
+
+	return devices
+}
+
+type Discovery struct {
+	busNumber string
+	scanner   Scanner
+}
+
+func New(scanner Scanner) (*Discovery, error) {
+	return &Discovery{
+		busNumber: "1",
+		scanner:   scanner,
+	}, nil
+}
+
+func (d *Discovery) Scan() []driver.DeviceInfo {
+	fmt.Println("Scanning I²C bus...")
+
+	devices, err := d.scanner.Scan(d.busNumber)
+	if err != nil {
+		fmt.Println("I²C scan error:", err)
+		return nil
+	}
+
+	for _, device := range devices {
+		fmt.Printf(
+			"Found device: 0x%02X\n",
+			device.Address,
+		)
 	}
 
 	return devices
