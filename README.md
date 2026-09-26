@@ -20,13 +20,16 @@
     5. センサーデータの長期保存・可視化 <br>
     6. ESP32との連携 <br>
     7. ローカルAIによるIoT制御 <br>
-      
-    ```sh: docker composeを使用してコンテナを起動
-    cd iot_home_assistant
-    docker compose -f docker/compose.yml up -d
-    ```
     
-    ```sh: go runを使用してゲートウェイを起動
-    cd app/gateway/
-    go run cmd/gateway/main.go
-    ```
+    docker composeを使用してコンテナを起動
+ 
+```bash
+cd iot_home_assistant
+docker compose -f docker/compose.yml up -d
+```
+
+    ゲートウェイを起動
+```bash
+cd app/gateway/
+go run cmd/gateway/main.go
+```
