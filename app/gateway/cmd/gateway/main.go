@@ -107,16 +107,26 @@ func main() {
 			fmt.Println("Published:", string(payload))
 
 			// 人間向け表示
-			if temperature, ok := value["temperature"]; ok {
-				fmt.Printf("Temperature: %.2f °C\n", temperature)
-			}
+			for key, value := range value {
+				switch key {
+				case "temperature":
+					fmt.Printf("Temperature: %.2f °C\n", value)
 
-			if humidity, ok := value["humidity"]; ok {
-				fmt.Printf("Humidity: %.2f %%\n", humidity)
-			}
+				case "humidity":
+					fmt.Printf("Humidity: %.2f %%\n", value)
 
-			if illuminance, ok := value["illuminance"]; ok {
-				fmt.Printf("Illuminance: %.2f lx\n", illuminance)
+				case "illuminance":
+					fmt.Printf("Illuminance: %.2f lx\n", value)
+
+				case "pressure":
+					fmt.Printf("Pressure: %.2f hPa\n", value)
+
+				case "co2":
+					fmt.Printf("CO2: %.0f ppm\n", value)
+
+				default:
+					fmt.Printf("%s: %.2f\n", key, value)
+				}
 			}
 		}
 	}
