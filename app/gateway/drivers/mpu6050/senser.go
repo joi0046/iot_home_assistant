@@ -65,6 +65,38 @@ func (s *Sensor) Read() (driver.Reading, error) {
 		return nil, fmt.Errorf("unexpected data length: %d", len(data))
 	}
 
-	// 後でここに加速度・ジャイロ・温度の変換を入れる。
-	return driver.Reading{}, nil
+	readInt16 := func(high, low byte) int16 {
+		return int16(uint16(high)<<8 | uint16(low))
+	}
+
+	rawAccelX := readInt16(data[0], data[1])
+	rawAccelY := readInt16(data[2], data[3])
+	rawAccelZ := readInt16(data[4], data[5])
+	rawTemp := readInt16(data[6], data[7])
+	rawGyroX := readInt16(data[8], data[9])
+	rawGyroY := readInt16(data[10], data[11])
+	rawGyroZ := readInt16(data[12], data[13])
+
+	// 初期設定のフルスケール:
+	// 加速度 ±2g → 16384 LSB/g
+	// ジャイロ ±250°/s → 131 LSB/(°/s)
+	accelX := float64(rawAccelX) / 16384.0
+	accelY := float64(rawAccelY) / 16384.0
+	accelZ := float64(rawAccelZ) / 16384.0
+
+	gyroX := float64(rawGyroX) / 131.0
+	gyroY := float64(rawGyroY) / 131.0
+	gyroZ := float64(rawGyroZ) / 131.0
+
+	temperature := float64(rawTemp)/340.0 + 36.53
+
+	return driver.Reading{
+		"acceleration_x": accelX,
+		"acceleration_y": accelY,
+		"acceleration_z": accelZ,
+		"gyroscope_x":    gyroX,
+		"gyroscope_y":    gyroY,
+		"gyroscope_z":    gyroZ,
+		"temperature":    temperature,
+	}, nil
 }
