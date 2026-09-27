@@ -6,6 +6,7 @@ import (
 
 	"gateway/drivers/bme280"
 	"gateway/drivers/hdc1000"
+	"gateway/drivers/mpu6050"
 
 	"gateway/internal/config"
 	"gateway/internal/device"
@@ -48,6 +49,7 @@ func New() (*Gateway, error) {
 	registry := driver.NewRegistry(
 		&bme280.Sensor{},
 		hdc1000.New(bus),
+		mpu6050.New(bus),
 	)
 
 	// Discovery
