@@ -78,6 +78,18 @@ services:
     volumes:
       - ../services/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
 
+  grafana:
+    image: grafana/grafana:latest
+    container_name: iot_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - influxdb
+    volumes:
+      - grafana_data:/var/lib/grafana
+
 volumes:
   influxdb_data:
   influxdb_config:
+  grafana_data:
