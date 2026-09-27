@@ -13,6 +13,7 @@ const (
 
 type I2C interface {
 	SetAddress(address uint8) error
+	Write(data []byte) error
 	ReadRegister(register uint8, length int) ([]byte, error)
 }
 
@@ -52,6 +53,11 @@ func (s *Sensor) Detect(info driver.DeviceInfo) bool {
 }
 
 func (s *Sensor) Read() (driver.Reading, error) {
+
+	if err := s.bus.Write([]byte{0x6B, 0x00}); err != nil {
+		return nil, fmt.Errorf("wake MPU6050: %w", err)
+	}
+
 	if err := s.bus.SetAddress(s.address); err != nil {
 		return nil, err
 	}
