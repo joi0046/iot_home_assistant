@@ -82,12 +82,31 @@ services:
     image: grafana/grafana:latest
     container_name: iot_grafana
     restart: unless-stopped
+
     ports:
       - "3000:3000"
+
     depends_on:
       - influxdb
+
     volumes:
       - grafana_data:/var/lib/grafana
+
+  ai-agent:
+    build:
+      context: ../services/ai-agent
+
+    container_name: iot_ai_agent
+    restart: unless-stopped
+
+    depends_on:
+      - influxdb
+
+    environment:
+      INFLUX_URL: http://influxdb:8086
+      INFLUXDB_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUXDB_ORG: ${INFLUXDB_ORG}
+      INFLUXDB_BUCKET: ${INFLUXDB_BUCKET}
 
 volumes:
   influxdb_data:

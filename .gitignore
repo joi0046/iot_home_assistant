@@ -34,3 +34,10 @@ go.work.sum
 
 homeassistant/
 app/gateway/get-docker.sh
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/
