@@ -13,7 +13,7 @@ INFLUX_BUCKET = os.environ["INFLUXDB_BUCKET"]
 def query_sensor_data():
     query = f'''
 from(bucket: "{INFLUX_BUCKET}")
-  |> range(start: -5m)
+  |> range(start: -1m)
 '''
 
     with InfluxDBClient(
@@ -42,6 +42,30 @@ from(bucket: "{INFLUX_BUCKET}")
     return readings
 
 
+def prepare_context(readings):
+    devices = {}
+
+    for reading in readings:
+        device_id = reading["device_id"]
+        device_type = reading["device_type"]
+        field = reading["field"]
+
+        # data_temperature_value
+        #        ↓
+        # temperature
+        field_name = field.removeprefix("data_").removesuffix("_value")
+
+        if device_id not in devices:
+            devices[device_id] = {
+                "device_type": device_type,
+                "fields": {},
+            }
+
+        devices[device_id]["fields"][field_name] = reading["value"]
+
+    return devices
+
+
 def main():
     print("AI Agent starting...")
 
@@ -49,8 +73,16 @@ def main():
 
     print(f"Retrieved {len(readings)} sensor readings")
 
+    context = prepare_context(readings)
+
+    print("\n=== AI Context ===")
+
     print(json.dumps(
-        readings,
+        context,
         ensure_ascii=False,
         indent=2,
     ))
+
+
+if __name__ == "__main__":
+    main()
