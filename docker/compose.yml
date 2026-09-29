@@ -92,7 +92,24 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
 
+  hermes:
+    image: nousresearch/hermes-agent:latest
+    container_name: iot_hermes
+    restart: unless-stopped
+    command: gateway run
+
+    ports:
+      - "8642:8642"
+      - "9119:9119"
+
+    environment:
+      HERMES_DASHBOARD: "1"
+
+    volumes:
+      - hermes_data:/opt/data
+
 volumes:
   influxdb_data:
   influxdb_config:
   grafana_data:
+  hermes_data:
