@@ -31,11 +31,11 @@ go test ./...
 go test ./internal/protocol
 ```
 
-docker composeを使用してコンテナを起動
+docker composeを使用してビルドしてコンテナを起動
  
 ```bash
 cd iot_home_assistant
-docker compose -f docker/compose.yml up -d
+docker compose --env-file .env -f docker/compose.yml up -d --build
 ```
 
 ゲートウェイを起動

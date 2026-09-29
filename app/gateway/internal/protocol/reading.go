@@ -68,6 +68,10 @@ func unitFor(key string) string {
 		return "A"
 	case "power":
 		return "W"
+	case "acceleration_x", "acceleration_y", "acceleration_z":
+		return "g"
+	case "gyroscope_x", "gyroscope_y", "gyroscope_z":
+		return "°/s"
 	default:
 		return ""
 	}
