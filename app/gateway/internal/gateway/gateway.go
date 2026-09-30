@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"gateway/drivers/bme280"
 	"gateway/drivers/hdc1000"
 	"gateway/drivers/mpu6050"
 
@@ -47,7 +46,6 @@ func New() (*Gateway, error) {
 
 	// センサードライバーを登録
 	registry := driver.NewRegistry(
-		&bme280.Sensor{},
 		hdc1000.New(bus),
 		mpu6050.New(bus),
 	)

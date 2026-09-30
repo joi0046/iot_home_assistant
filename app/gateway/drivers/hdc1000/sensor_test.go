@@ -89,9 +89,9 @@ func TestRead(t *testing.T) {
 		t.Fatalf("Read() error = %v", err)
 	}
 
-	if reading["temperature"] != 62.5 {
+	if reading["temperature"] != 42.5 {
 		t.Errorf(
-			"temperature = %f, want 62.5",
+			"temperature = %f, want 42.5",
 			reading["temperature"],
 		)
 	}

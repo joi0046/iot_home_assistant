@@ -3,6 +3,7 @@ package discovery
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -17,7 +18,12 @@ type Scanner interface {
 type I2CScanner struct{}
 
 func (s *I2CScanner) Scan(busNumber string) ([]driver.DeviceInfo, error) {
-	cmd := exec.Command("i2cdetect", "-y", busNumber)
+	path, err := i2cdetectPath()
+	if err != nil {
+		return nil, err
+	}
+
+	cmd := exec.Command(path, "-y", busNumber)
 
 	output, err := cmd.Output()
 	if err != nil {
@@ -25,6 +31,25 @@ func (s *I2CScanner) Scan(busNumber string) ([]driver.DeviceInfo, error) {
 	}
 
 	return parseOutput(string(output), busNumber), nil
+}
+
+func i2cdetectPath() (string, error) {
+	if path, err := exec.LookPath("i2cdetect"); err == nil {
+		return path, nil
+	}
+
+	for _, path := range []string{
+		"/usr/sbin/i2cdetect",
+		"/sbin/i2cdetect",
+		"/usr/bin/i2cdetect",
+	} {
+		info, err := os.Stat(path)
+		if err == nil && !info.IsDir() && info.Mode()&0o111 != 0 {
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("i2cdetect not found (check PATH)")
 }
 
 func parseOutput(output string, busNumber string) []driver.DeviceInfo {
