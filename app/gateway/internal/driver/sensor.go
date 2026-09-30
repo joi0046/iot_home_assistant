@@ -7,3 +7,7 @@ type SensorDriver interface {
 	Detect(info DeviceInfo) bool
 	Read() (Reading, error)
 }
+
+type Initializer interface {
+	Initialize() error
+}

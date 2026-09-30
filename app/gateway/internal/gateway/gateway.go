@@ -77,6 +77,17 @@ func New() (*Gateway, error) {
 		}
 	}
 
+	for _, device := range manager.Devices() {
+		initializer, ok := device.Driver.(driver.Initializer)
+		if !ok {
+			continue
+		}
+
+		if err := initializer.Initialize(); err != nil {
+			fmt.Println("Initialize error:", err)
+		}
+	}
+
 	return &Gateway{
 		bus:       bus,
 		mqtt:      mqttClient,
