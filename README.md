@@ -10,7 +10,6 @@
     3. InfluxDB <br>
     4. Grafana <br>
     5. Hermes Agent <br>
-    6. Bonsai <br>
 
 ゴールとして <br>
     1. センサーの自動認識 <br>
@@ -19,7 +18,6 @@
     4. Home Assistantへの自動登録 <br>
     5. センサーデータの長期保存・可視化 <br>
     6. ESP32との連携 <br>
-    7. ローカルAIによるIoT制御 <br>
 
 テストを実行
 
