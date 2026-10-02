@@ -26,7 +26,6 @@ Grafana, and other systems can consume it in a loosely coupled way.
     4. Home Assistantへの自動登録 <br>
     5. センサーデータの長期保存・可視化 <br>
     6. ESP32との連携 <br>
-    7. ローカルAIによるIoT制御 <br>
 
 技術スタックとして <br>
     1. Golang <br>
