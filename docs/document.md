@@ -56,26 +56,40 @@ Raspberry Piを中心としたIoT Gatewayを構築し、接続されたセンサ
 
 ## 3.2 I²Cセンサー
 
-MVPでは以下のセンサーを対象とする。
+現在対応済みのセンサーは以下の通り。
 
-### BME280
+### HDC1000
 
 取得対象:
 
 * 温度
 * 湿度
-* 気圧
 
 I²Cアドレス:
 
-* `0x76`
-* `0x77`
+* `0x40` 〜 `0x43`
 
-### BH1750
+アドレスに加えてManufacturer ID / Device IDレジスタを確認して判定する。
+
+### MPU6050
 
 取得対象:
 
-* 照度
+* 加速度 (x/y/z)
+* ジャイロ (x/y/z)
+* 温度
+
+I²Cアドレス:
+
+* `0x68`
+* `0x69`
+
+WHO_AM_Iレジスタを確認して判定する。
+
+### 予定
+
+* BME280 (温度・湿度・気圧): Driverはスタブのみ
+* BH1750 (照度): 未実装
 
 ---
 
@@ -95,8 +109,9 @@ Raspberry Pi
 │   ├── Device Manager
 │   │
 │   └── Sensor Drivers
-│       ├── BME280
-│       └── BH1750
+│       ├── HDC1000
+│       ├── MPU6050
+│       └── (BME280 / BH1750は予定)
 │
 ├── MQTT Broker
 │   └── Mosquitto
@@ -175,9 +190,9 @@ DeviceInfo
      ▼
 Driver Registry
      │
-     ├── BME280 Driver
-     ├── BH1750 Driver
-     └── その他のDriver
+     ├── HDC1000 Driver
+     ├── MPU6050 Driver
+     └── その他のDriver (BME280 / BH1750は予定)
 ```
 
 各Driverは `Detect()` を実装する。
@@ -200,7 +215,7 @@ func (s *Sensor) Detect(info driver.DeviceInfo) bool
 type SensorDriver interface {
     Name() string
     Detect(info DeviceInfo) bool
-    Read() (float64, error)
+    Read() (Reading, error)
 }
 ```
 
@@ -208,39 +223,29 @@ type SensorDriver interface {
 
 ---
 
-# 9. BME280 Driver
+# 9. HDC1000 Driver
 
-BME280 DriverはBME280センサーとの通信を担当する。
+HDC1000 DriverはHDC1000センサーとの通信を担当する。
 
-現在の基本構造:
+`Detect()` ではアドレス範囲 (`0x40` 〜 `0x43`) に加えて、
+Manufacturer ID / Device IDレジスタを確認する。
+`Read()` では温度・湿度を返す。
 
-```go
-type Sensor struct{}
+# 10. MPU6050 Driver
 
-func (s *Sensor) Name() string {
-    return "BME280"
-}
-
-func (s *Sensor) Detect(info driver.DeviceInfo) bool {
-    return info.Address == 0x76 ||
-           info.Address == 0x77
-}
-```
-
-将来的にはアドレスだけではなく、センサー内部のChip ID等を確認して、より確実なデバイス判定を行う。
-
----
-
-# 10. BH1750 Driver
-
-BH1750 DriverはBH1750センサーとの通信を担当する。
+MPU6050 DriverはMPU6050センサーとの通信を担当する。
 
 主な責務:
 
-* BH1750の検出
-* 測定モード設定
-* 照度取得
+* MPU6050の検出 (WHO_AM_Iレジスタを確認)
+* スリープ解除 (`Initialize()`)
+* 加速度・ジャイロ・温度の取得
 * エラー処理
+
+# 10.1 今後対応予定のDriver
+
+* BME280 Driver (温度・湿度・気圧): 現在はスタブのみ。アドレス (`0x76` / `0x77`) による判定は実装済みだが、実測値の取得は未実装。
+* BH1750 Driver (照度): 未実装。
 
 ---
 
@@ -253,8 +258,9 @@ Driver Registryでは、Gatewayが利用可能なDriverを管理する。
 ```text
 Registry
 │
-├── BME280
-└── BH1750
+├── HDC1000
+├── MPU6050
+└── (BME280 / BH1750は予定)
 ```
 
 Discoveryによってデバイスが発見された場合、Registryから対応するDriverを検索する。
@@ -412,9 +418,9 @@ Gatewayは主要な処理についてログを出力する。
 
 ```text
 Scanning I²C bus...
-Found device: 0x76
-Detected sensor: BME280
-Registered device: BME280
+Found device: 0x40
+Detected sensor: HDC1000
+Registered device: HDC1000
 Reading sensor...
 Publishing MQTT message...
 ```
@@ -431,8 +437,10 @@ Publishing MQTT message...
 
 ```text
 I²C
- ├── BME280
- ├── BH1750
+ ├── HDC1000
+ ├── MPU6050
+ ├── BME280 (予定)
+ ├── BH1750 (予定)
  └── その他センサー
 
 BLE
@@ -477,13 +485,15 @@ Home Assistant
 * [x] Raspberry Pi上でGo Gatewayを起動できる
 * [x] I²Cバスをスキャンできる
 * [x] I²Cデバイスのアドレスを検出できる
-* [x] BME280を認識できる
-* [ ] BH1750を認識できる
-* [ ] Driver Registryを利用できる
-* [ ] Device Managerへ自動登録できる
-* [ ] センサー値を取得できる
-* [ ] MQTTへ送信できる
+* [x] HDC1000を認識できる
+* [x] MPU6050を認識できる
+* [x] Driver Registryを利用できる
+* [x] Device Managerへ自動登録できる
+* [x] センサー値を取得できる
+* [x] MQTTへ送信できる
 * [ ] Home Assistantで確認できる
+* [ ] BME280を認識できる
+* [ ] BH1750を認識できる
 
 ### 後回し
 
@@ -528,7 +538,7 @@ MQTTへ公開
 │                                         │
 │  I²C Sensors                            │
 │  ┌────────┐    ┌────────┐               │
-│  │ BME280 │    │ BH1750 │               │
+│  │ HDC1000│    │ MPU6050│               │
 │  └────┬───┘    └────┬───┘               │
 │       │             │                   │
 │       └──────┬──────┘                   │
@@ -600,9 +610,11 @@ MQTTへ公開
 
 * I²Cスキャン
 * `DeviceInfo`
-* BME280 Driver
+* HDC1000 Driver
+* MPU6050 Driver
 * Driver Registry
 * Device Manager
+* MQTT publish (`gateway/v1/readings`)
 
 などの基礎部分を構築している。
 
