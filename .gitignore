@@ -35,6 +35,8 @@ go.work.sum
 
 homeassistant/
 app/gateway/get-docker.sh
+.commandcode
+
 
 # Python
 __pycache__/
