@@ -69,15 +69,7 @@ cp .env.example .env
 docker compose --env-file .env -f docker/compose.yml up -d --build
 ```
 
-### 3. ゲートウェイの起動
 
-```bash
-cd app/gateway/
-go run cmd/gateway/main.go
-```
-
-ゲートウェイはI²Cバスをスキャンし、対応センサーを自動検出・登録して、
-`gateway/v1/readings` トピックへMQTT publishする。
 
 ## サービス一覧
 
