@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"gateway/drivers/bme280"
 	"gateway/drivers/hdc1000"
 	"gateway/drivers/mpu6050"
 
@@ -47,7 +46,6 @@ func New() (*Gateway, error) {
 
 	// センサードライバーを登録
 	registry := driver.NewRegistry(
-		&bme280.Sensor{},
 		hdc1000.New(bus),
 		mpu6050.New(bus),
 	)
@@ -74,6 +72,17 @@ func New() (*Gateway, error) {
 				info.Bus,
 				info.Address,
 			)
+		}
+	}
+
+	for _, device := range manager.Devices() {
+		initializer, ok := device.Driver.(driver.Initializer)
+		if !ok {
+			continue
+		}
+
+		if err := initializer.Initialize(); err != nil {
+			fmt.Println("Initialize error:", err)
 		}
 	}
 

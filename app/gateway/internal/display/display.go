@@ -16,6 +16,12 @@ func Print(value driver.Reading) {
 		"voltage",
 		"current",
 		"power",
+		"acceleration_x",
+		"acceleration_y",
+		"acceleration_z",
+		"gyroscope_x",
+		"gyroscope_y",
+		"gyroscope_z",
 	}
 
 	for _, key := range order {
@@ -44,6 +50,12 @@ func Print(value driver.Reading) {
 
 			case "power":
 				fmt.Printf("Power: %.2f W\n", v)
+
+			case "acceleration_x", "acceleration_y", "acceleration_z":
+				fmt.Printf("%s: %.2f g\n", key, v)
+
+			case "gyroscope_x", "gyroscope_y", "gyroscope_z":
+				fmt.Printf("%s: %.2f °/s\n", key, v)
 			}
 		}
 	}

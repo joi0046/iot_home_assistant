@@ -51,9 +51,13 @@ func (b *Bus) SetAddress(address uint8) error {
 }
 
 func (b *Bus) Write(data []byte) error {
-	_, err := b.file.Write(data)
+	n, err := b.file.Write(data)
 	if err != nil {
 		return fmt.Errorf("I²C write: %w", err)
+	}
+
+	if n != len(data) {
+		return fmt.Errorf("I²C write: short write %d/%d", n, len(data))
 	}
 
 	return nil
@@ -62,9 +66,13 @@ func (b *Bus) Write(data []byte) error {
 func (b *Bus) Read(length int) ([]byte, error) {
 	data := make([]byte, length)
 
-	_, err := b.file.Read(data)
+	n, err := b.file.Read(data)
 	if err != nil {
 		return nil, fmt.Errorf("I²C read: %w", err)
+	}
+
+	if n != length {
+		return nil, fmt.Errorf("I²C read: short read %d/%d", n, length)
 	}
 
 	return data, nil
@@ -78,9 +86,13 @@ func (b *Bus) ReadRegister(register uint8, length int) ([]byte, error) {
 
 	data := make([]byte, length)
 
-	_, err = b.file.Read(data)
+	n, err := b.file.Read(data)
 	if err != nil {
 		return nil, fmt.Errorf("read register: %w", err)
+	}
+
+	if n != length {
+		return nil, fmt.Errorf("read register: short read %d/%d", n, length)
 	}
 
 	return data, nil
