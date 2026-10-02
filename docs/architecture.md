@@ -22,8 +22,7 @@ IoT Gatewayは、Raspberry Piなどのデバイス上で動作し、センサー
                     │   IoT Devices    │
                     │                  │
                     │ HDC1000          │
-                    │ BME280           │
-                    │ BH1750           │
+                    │ MPU6050          │
                     └────────┬─────────┘
                              │
                             I²C
@@ -75,8 +74,8 @@ cmd/gateway
       │      ▼
       │   SensorDriver
       │      ├── HDC1000
-      │      ├── BME280
-      │      └── BH1750
+      │      ├── MPU6050
+      │      └── (BME280 / BH1750は予定)
       │
       └── Device Manager
              │
@@ -116,10 +115,9 @@ SensorDriver
 Sensor
    │
    ▼
-Reading
- ├── Temperature
- ├── Humidity
- └── Lux
+Reading (driver.Reading: map[string]float64)
+ ├── temperature / humidity (HDC1000)
+ └── acceleration_x/y/z, gyroscope_x/y/z, temperature (MPU6050)
 ```
 
 ## 6. Data Flow
@@ -240,7 +238,7 @@ Gateway ─ MQTT ─ Database
 今後は以下の機能を検討する。
 
 * MQTT Discovery
-* センサーDriverの追加
+* センサーDriverの追加 (BME280 / BH1750など)
 * GatewayのHTTP/API
 * Gatewayの状態・デバイス情報取得
 * AI Agent向けのデータ取得インターフェース
@@ -249,17 +247,18 @@ Gateway ─ MQTT ─ Database
 * Gateway間通信
 * センサーのホットプラグ対応
 
-````
+## 13. Background
 
-これ、**かなり方向性が変わった**と思う。
+方針は当初から一貫している。
 
-最初は「I²Cセンサーを自動検出するGateway」だったけど、今の定義だと、
+最初は「I²Cセンサーを自動検出するGateway」として始まり、現在は、
 
 > **IoTの物理世界と、AI・DB・Home Assistantなどのソフトウェア世界の間をつなぐ標準化されたGateway**
 
-になってる。
+として位置づけている。自動検出・Driver共通化・MQTTによる疎結合という核は変わっておらず、
+AI・DB連携はその延長である。
 
-そして重要なのが、**AI AgentにI²Cの知識を持たせない**こと。
+重要なのが、**AI AgentにI²Cの知識を持たせない**ことである。
 
 ```text
         AI Agent
@@ -276,8 +275,8 @@ Gateway ─ MQTT ─ Database
         24.3°C
 ````
 
-AI側は「HDC1000」「I²Cアドレス0x40」「レジスタ0xFE」なんて知らなくていい。
+AI側は「HDC1000」「I²Cアドレス0x40」「レジスタ0xFE」などを知らなくてよい。
 
-逆にGateway側も「AIがどう判断するか」は知らなくていい。
+逆にGateway側も「AIがどう判断するか」は知らなくてよい。
 
-この**責務分離**が、このプロジェクトの設計上かなり大事なところになりそう。
+この**責務分離**が、このプロジェクトの設計上かなり大事なところである。
