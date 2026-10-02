@@ -162,6 +162,12 @@ BH1750
 | `voltage`     | 電圧      | `V`   |
 | `current`     | 電流      | `A`   |
 | `power`       | 電力      | `W`   |
+| `acceleration_x` | 加速度X | `g` |
+| `acceleration_y` | 加速度Y | `g` |
+| `acceleration_z` | 加速度Z | `g` |
+| `gyroscope_x`    | 角速度X | `°/s` |
+| `gyroscope_y`    | 角速度Y | `°/s` |
+| `gyroscope_z`    | 角速度Z | `°/s` |
 
 センサー固有の名称ではなく、可能な限り一般的な物理量の名称を使用する。
 
