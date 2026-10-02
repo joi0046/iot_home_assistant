@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"fmt"
+	"time"
 
 	paho "github.com/eclipse/paho.mqtt.golang"
 )
@@ -13,6 +14,12 @@ type Client struct {
 func New(brokerURL string) (*Client, error) {
 	opts := paho.NewClientOptions()
 	opts.AddBroker(brokerURL)
+
+	opts.AutoReconnect = true
+	opts.ConnectRetry = false
+	opts.ConnectTimeout = 5 * time.Second
+
+	fmt.Printf("Connecting to MQTT broker: %s\n", brokerURL)
 
 	client := paho.NewClient(opts)
 
@@ -37,6 +44,10 @@ func (c *Client) Publish(topic string, payload string) error {
 	}
 
 	return nil
+}
+
+func (c *Client) IsConnected() bool {
+	return c.client.IsConnected()
 }
 
 func (c *Client) Close() {

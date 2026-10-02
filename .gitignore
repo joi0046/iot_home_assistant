@@ -16,6 +16,7 @@
 coverage.*
 *.coverprofile
 profile.cov
+.commandcode/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
@@ -26,6 +27,7 @@ go.work.sum
 
 # env file
 .env
+!.env.example
 
 # Editor/IDE
 # .idea/
@@ -33,4 +35,12 @@ go.work.sum
 
 homeassistant/
 app/gateway/get-docker.sh
+.commandcode
 
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Virtual environments
+.venv/

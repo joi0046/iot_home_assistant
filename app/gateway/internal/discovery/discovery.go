@@ -3,6 +3,7 @@ package discovery
 import (
 	"bufio"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 	"strings"
@@ -10,37 +11,55 @@ import (
 	"gateway/internal/driver"
 )
 
-type Discovery struct {
-	busNumber string
-	registry  *driver.Registry
+type Scanner interface {
+	Scan(busNumber string) ([]driver.DeviceInfo, error)
 }
 
-func New(registry *driver.Registry) (*Discovery, error) {
-	return &Discovery{
-		busNumber: "1",
-		registry:  registry,
-	}, nil
-}
+type I2CScanner struct{}
 
-func (d *Discovery) Scan() []driver.DeviceInfo {
-	fmt.Println("Scanning I²C bus...")
+func (s *I2CScanner) Scan(busNumber string) ([]driver.DeviceInfo, error) {
+	path, err := i2cdetectPath()
+	if err != nil {
+		return nil, err
+	}
 
-	cmd := exec.Command("i2cdetect", "-y", d.busNumber)
+	cmd := exec.Command(path, "-y", busNumber)
 
 	output, err := cmd.Output()
 	if err != nil {
-		fmt.Println("I²C scan error:", err)
-		return nil
+		return nil, fmt.Errorf("i2cdetect: %w", err)
 	}
 
+	return parseOutput(string(output), busNumber), nil
+}
+
+func i2cdetectPath() (string, error) {
+	if path, err := exec.LookPath("i2cdetect"); err == nil {
+		return path, nil
+	}
+
+	for _, path := range []string{
+		"/usr/sbin/i2cdetect",
+		"/sbin/i2cdetect",
+		"/usr/bin/i2cdetect",
+	} {
+		info, err := os.Stat(path)
+		if err == nil && !info.IsDir() && info.Mode()&0o111 != 0 {
+			return path, nil
+		}
+	}
+
+	return "", fmt.Errorf("i2cdetect not found (check PATH)")
+}
+
+func parseOutput(output string, busNumber string) []driver.DeviceInfo {
 	devices := make([]driver.DeviceInfo, 0)
 
-	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+	scanner := bufio.NewScanner(strings.NewReader(output))
 
 	for scanner.Scan() {
 		fields := strings.Fields(scanner.Text())
 
-		// "00:", "10:", ... の行以外は無視
 		if len(fields) < 2 {
 			continue
 		}
@@ -53,13 +72,7 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 		}
 
 		for column, value := range fields[1:] {
-			// デバイスが存在しない
-			if value == "--" {
-				continue
-			}
-
-			// UU = カーネルが使用中
-			if value == "UU" {
+			if value == "--" || value == "UU" {
 				continue
 			}
 
@@ -68,20 +81,48 @@ func (d *Discovery) Scan() []driver.DeviceInfo {
 				continue
 			}
 
-			// 念のため i2cdetect の位置とも照合
 			expected := row + uint64(column)
 
 			if address != expected {
 				continue
 			}
 
-			fmt.Printf("Found device: 0x%02X\n", address)
-
 			devices = append(devices, driver.DeviceInfo{
-				Bus:     "i2c-" + d.busNumber,
+				Bus:     "i2c-" + busNumber,
 				Address: uint8(address),
 			})
 		}
+	}
+
+	return devices
+}
+
+type Discovery struct {
+	busNumber string
+	scanner   Scanner
+}
+
+func New(scanner Scanner) (*Discovery, error) {
+	return &Discovery{
+		busNumber: "1",
+		scanner:   scanner,
+	}, nil
+}
+
+func (d *Discovery) Scan() []driver.DeviceInfo {
+	fmt.Println("Scanning I²C bus...")
+
+	devices, err := d.scanner.Scan(d.busNumber)
+	if err != nil {
+		fmt.Println("I²C scan error:", err)
+		return nil
+	}
+
+	for _, device := range devices {
+		fmt.Printf(
+			"Found device: 0x%02X\n",
+			device.Address,
+		)
 	}
 
 	return devices
